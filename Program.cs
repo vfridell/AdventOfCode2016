@@ -1,5 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
+using System.Linq;
+using System.Security.Cryptography;
+using AdventOfCode2016;
 
 namespace Advent_Of_Code_2016
 {
@@ -7,7 +12,135 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day2();
+            Day5();
+        }
+
+        public static void Day5()
+        {
+            string doorID = "uqwqemis";
+            //string password = "";
+            Dictionary<int,char> password = new Dictionary<int, char>();
+            int index = 0;
+            while (password.Values.Count < 8)
+            {
+                byte[] bytes = $"{doorID}{index}".ToCharArray().Select(c => (byte) c).ToArray();
+                MemoryStream stream = new MemoryStream(bytes);
+                byte[] hashedBytes = MD5.Create().ComputeHash(stream);
+                string hashString = hashedBytes.Aggregate<byte, string>("", (s, b) => s + b.ToString("x2"));
+                if (hashString.Substring(0,5) == "00000")
+                {
+                    // part 1
+                    //password = password + hashString[5];
+
+                    // part 2
+                    Regex digitRegex = new Regex("[0-7]");
+                    if (digitRegex.IsMatch(hashString.Substring(5, 1)))
+                    {
+                        int pos = int.Parse(hashString.Substring(5, 1));
+                        password[pos] = hashString[6];
+                    }
+
+                }
+                index++;
+            }
+            string passwordString = password.Aggregate("", (s, kvp) => s + kvp.Value);
+            Console.WriteLine($"the password is {passwordString}");
+        }
+
+        public static void Day4()
+        {
+            Regex regex = new Regex(@"([a-z-]+)-([0-9]+)\[([a-z]+)\]");
+            int realRoomSectorSum = 0;
+            foreach (string roomCode in Inputs.Day4Input)
+            {
+                MatchCollection matches = regex.Matches(roomCode);
+                string encryptedName = matches[0].Groups[1].Value;
+                string sectorID = matches[0].Groups[2].Value;
+                string checksum = matches[0].Groups[3].Value;
+
+                // get all the characters from the encryped name and sort them
+                List<EncryptedRoomPart> parts = new List<EncryptedRoomPart>();
+                string stuff = encryptedName.ToCharArray()
+                                            .OrderBy(c => c)
+                                            .Select(c => c.ToString())
+                                            .Aggregate((c, c1) => c + c1)
+                                            .Replace("-", "");
+
+                // apply counts to characters and put them in an array of special objects
+                char lastChar = stuff[0];
+                int currentCount = 1;
+                for(int i = 1; i < stuff.Length; i++)
+                {
+                    if (lastChar == stuff[i])
+                    {
+                        currentCount++;
+                    }
+                    else
+                    {
+                        parts.Add(new EncryptedRoomPart(currentCount, lastChar));
+                        currentCount = 1;
+                        lastChar = stuff[i];
+                    }
+                }
+                parts.Add(new EncryptedRoomPart(currentCount, lastChar));
+
+                // sort the objects using the custom CompareTo to handle the digit/alpha sorting conflict
+                string computedChecksum =
+                    new string(
+                        parts.OrderByDescending(s => s)
+                            .Aggregate<EncryptedRoomPart, string>("", (s, s1) => s + s1.Character )
+                            .Where(c => !char.IsDigit(c))
+                            .Take(5)
+                            .ToArray());
+
+                if (computedChecksum == checksum)
+                {
+                    realRoomSectorSum += int.Parse(sectorID);
+                    string decryptedRoomName =
+                        new string(
+                            encryptedName.Select(c =>
+                            {
+                                if (c == '-') return ' ';
+                                else return (char) ((((c - 97) + int.Parse(sectorID))%26) + 97);
+                            }).ToArray());
+                    if (decryptedRoomName.Contains("north"))
+                        Console.WriteLine($"'{decryptedRoomName}' sector {sectorID}");
+                }
+            }
+
+            Console.WriteLine($"sum of the sector IDs of the real rooms: {realRoomSectorSum}");
+        }
+
+        public static void Day3()
+        {
+            // part 1
+            //int total = 0;
+            //for (int i = 0; i < Inputs.Day3Input.Length / 3; i++)
+            //{
+            //    if ((Inputs.Day3Input[i, 0] + Inputs.Day3Input[i, 1] <= Inputs.Day3Input[i, 2]) ||
+            //        (Inputs.Day3Input[i, 0] + Inputs.Day3Input[i, 2] <= Inputs.Day3Input[i, 1]) ||
+            //        (Inputs.Day3Input[i, 1] + Inputs.Day3Input[i, 2] <= Inputs.Day3Input[i, 0]))
+            //    {
+            //        total++;
+            //    }
+            //}
+
+            // part 2
+            int total = 0;
+            for (int i = 0; i < Inputs.Day3Input.Length / 3; i+=3)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    if ((Inputs.Day3Input[i, j] + Inputs.Day3Input[i + 1, j] <= Inputs.Day3Input[i + 2, j]) ||
+                        (Inputs.Day3Input[i, j] + Inputs.Day3Input[i + 2, j] <= Inputs.Day3Input[i + 1, j]) ||
+                        (Inputs.Day3Input[i + 1, j] + Inputs.Day3Input[i + 2, j] <= Inputs.Day3Input[i, j]))
+                    {
+                        total++;
+                    }
+                }
+            }
+            Console.WriteLine($"Total bad triangles: {total}");
+            Console.WriteLine($"Total possible triangles: {Inputs.Day3Input.Length / 3 - total}");
         }
 
         public static void Day2()
