@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -12,7 +13,28 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day5();
+            Day6();
+        }
+
+        public static void Day6()
+        {
+            Regex repeatRegex = new Regex(@"([a-z])\1*");
+
+            string message = "";
+            for (int i = 0; i < Inputs.Day6Input[0].Length; i++)
+            {
+                string colString = Inputs.Day6Input.Aggregate("", (s1, s) => s[i] + s1);
+                string orderedColString = colString.ToCharArray().OrderBy(c => c).Aggregate("", (s1, s) => s + s1);
+                var stringList = new List<string>();
+                foreach (Match match in repeatRegex.Matches(orderedColString))
+                {
+                    stringList.Add(match.Groups[0].Value);
+                }
+                
+                message = message + stringList.OrderBy(s => s.Length).First()[0];
+            }
+
+            Console.WriteLine(message);
         }
 
         public static void Day5()
