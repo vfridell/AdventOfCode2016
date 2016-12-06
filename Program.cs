@@ -17,6 +17,7 @@ namespace Advent_Of_Code_2016
 
         public static void Day5()
         {
+            //string doorID = "abc";
             string doorID = "uqwqemis";
             //string password = "";
             Dictionary<int,char> password = new Dictionary<int, char>();
@@ -37,13 +38,13 @@ namespace Advent_Of_Code_2016
                     if (digitRegex.IsMatch(hashString.Substring(5, 1)))
                     {
                         int pos = int.Parse(hashString.Substring(5, 1));
-                        password[pos] = hashString[6];
+                        if(!password.ContainsKey(pos)) password[pos] = hashString[6];
                     }
 
                 }
                 index++;
             }
-            string passwordString = password.Aggregate("", (s, kvp) => s + kvp.Value);
+            string passwordString = $"{password[0]}{password[1]}{password[2]}{password[3]}{password[4]}{password[5]}{password[6]}{password[7]}";
             Console.WriteLine($"the password is {passwordString}");
         }
 
