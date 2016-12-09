@@ -13,7 +13,106 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day6();
+            Day9Part2();
+        }
+
+        public static void Day9()
+        {
+            int totalLength = 0;
+            Regex regex = new Regex(@"(\(([0-9]+)x([0-9]+)\))(.*)");
+            foreach (string input in Inputs.Day8Input)
+            {
+                string decompressed = input;
+                MatchCollection matches = regex.Matches(decompressed);
+                while (matches.Count > 0)
+                {
+                    Match match = matches[0];
+                    int charsAfter = int.Parse(match.Groups[2].Value);
+                    int repeatNum = int.Parse(match.Groups[3].Value);
+                    string repeatPiece = string.Concat(Enumerable.Repeat(match.Groups[4].Value.Substring(0, charsAfter), repeatNum));
+                    repeatPiece = repeatPiece.Replace('(', '{').Replace(')', '}');
+                    string pattern = $@"\{match.Groups[1].Value.Replace(")", @"\)")}.{{{match.Groups[2]}}}";
+                    string front = match.Index - 1 < 0 ? "" : decompressed.Substring(0, match.Index);
+                    string middle = decompressed.Substring(match.Index, match.Groups[1].Value.Length + charsAfter);
+                    string end = decompressed.Substring(match.Index + match.Groups[1].Value.Length + charsAfter);
+                    decompressed = front + Regex.Replace(middle, pattern, repeatPiece) + end;
+                    matches = regex.Matches(decompressed);
+                }
+                totalLength += decompressed.Length;
+            }
+            Console.WriteLine($"Total length: {totalLength}");
+        }
+
+        public static void Day9Part2()
+        {
+            long totalLength = 0;
+            Regex regex = new Regex(@"(\(([0-9]+)x([0-9]+)\))(.*)");
+            foreach (string input in Inputs.Day8Input)
+            {
+                string decompressed = input;
+                MatchCollection matches = regex.Matches(decompressed);
+                while (matches.Count > 0)
+                {
+                    Match match = matches[0];
+                    int charsAfter = int.Parse(match.Groups[2].Value);
+                    int repeatNum = int.Parse(match.Groups[3].Value);
+                    string repeatPiece = string.Concat(Enumerable.Repeat(match.Groups[4].Value.Substring(0, charsAfter), repeatNum));
+                    //repeatPiece = repeatPiece.Replace('(', '{').Replace(')', '}');
+                    string pattern = $@"\{match.Groups[1].Value.Replace(")", @"\)")}.{{{match.Groups[2]}}}";
+                    string front = match.Index - 1 < 0 ? "" : decompressed.Substring(0, match.Index);
+                    string middle = decompressed.Substring(match.Index, match.Groups[1].Value.Length + charsAfter);
+                    string end = decompressed.Substring(match.Index + match.Groups[1].Value.Length + charsAfter);
+
+
+                    totalLength += Day9Part2Recursive(middle, repeatNum);
+
+                }
+            }
+            Console.WriteLine($"Total length: {totalLength}");
+        }
+
+        public static long Day9Part2Recursive(string middle, int multiplier)
+        {
+            
+        }
+
+        public static void Day7Part2()
+        {
+            Regex validABARegex1 = new Regex(@"((\[[a-z]\])+|^[a-z]*|][a-z]*)(([a-z])(?!\4)([a-z])\4).*\[[a-z]*(\5\4\5)[a-z]*\]");
+            Regex validABARegex2 = new Regex(@"\[[a-z]*(([a-z])(?!\2)([a-z])\2)[a-z]*\](.*\])*[a-z]*(\3\2\3)");
+            int total = 0;
+            StreamWriter writer = new StreamWriter(File.OpenWrite("failed_ABA.txt"));
+            foreach (string input in Inputs.Day7Input)
+            {
+                if (validABARegex1.IsMatch(input) || validABARegex2.IsMatch(input))
+                {
+                    total++;
+
+                    var matches1 = validABARegex1.Matches(input);
+                    var matches2 = validABARegex2.Matches(input);
+                }
+                else
+                {
+                    //writer.WriteLine(input);
+                    Console.WriteLine(input);
+                }
+            }
+            Console.WriteLine($"Total ABA IPs: {total}");
+        }
+
+        public static void Day7Part1()
+        {
+            Regex validABBARegex = new Regex(@"((\[[a-z]\])+|^[a-z]*|][a-z]*)(([a-z])(?!\4)([a-z])\5\4)");
+            Regex invalidABBARegex = new Regex(@"\[[a-z]*([a-z])(?!\1)([a-z])\2\1[a-z]*\]");
+            int total = 0;
+            foreach (string input in Inputs.Day7Input)
+            {
+                if(validABBARegex.IsMatch(input) && !invalidABBARegex.IsMatch(input))
+                    total++;
+
+                var matches = validABBARegex.Matches(input);
+            }
+            Console.WriteLine($"Total ABBA IPs: {total}");
         }
 
         public static void Day6()
