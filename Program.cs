@@ -45,8 +45,10 @@ namespace Advent_Of_Code_2016
 
         public static void Day9Part2()
         {
+            Console.WriteLine(DateTime.Now.ToLongTimeString());
+            DateTime start = DateTime.Now;
             long totalLength = 0;
-            Regex regex = new Regex(@"(\(([0-9]+)x([0-9]+)\))(.*)");
+            Regex regex = new Regex(@"(\(([0-9]+)x([0-9]+)\))(.*)", RegexOptions.Compiled);
             foreach (string input in Inputs.Day8Input)
             {
                 string decompressed = input;
@@ -57,23 +59,18 @@ namespace Advent_Of_Code_2016
                     int charsAfter = int.Parse(match.Groups[2].Value);
                     int repeatNum = int.Parse(match.Groups[3].Value);
                     string repeatPiece = string.Concat(Enumerable.Repeat(match.Groups[4].Value.Substring(0, charsAfter), repeatNum));
-                    //repeatPiece = repeatPiece.Replace('(', '{').Replace(')', '}');
                     string pattern = $@"\{match.Groups[1].Value.Replace(")", @"\)")}.{{{match.Groups[2]}}}";
                     string front = match.Index - 1 < 0 ? "" : decompressed.Substring(0, match.Index);
+                    totalLength += front.Length;
                     string middle = decompressed.Substring(match.Index, match.Groups[1].Value.Length + charsAfter);
                     string end = decompressed.Substring(match.Index + match.Groups[1].Value.Length + charsAfter);
-
-
-                    totalLength += Day9Part2Recursive(middle, repeatNum);
-
+                    decompressed = Regex.Replace(middle, pattern, repeatPiece) + end;
+                    matches = regex.Matches(decompressed);
                 }
+                totalLength += decompressed.Length;
             }
             Console.WriteLine($"Total length: {totalLength}");
-        }
-
-        public static long Day9Part2Recursive(string middle, int multiplier)
-        {
-            
+            Console.WriteLine($"Duration in minutes: {(DateTime.Now - start).TotalMinutes}");
         }
 
         public static void Day7Part2()
