@@ -13,14 +13,87 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day9Part2();
+            Day8();
+        }
+
+        public static void Day8()
+        {
+            Regex regex = new Regex(@"(rotate (row y=|column x=)([0-9]+) by ([0-9]+))|(rect ([0-9]+)x([0-9]+))");
+            int width = 50, height = 6;
+            bool[,] screen = new bool[width, height];
+            Action<int, int> rect = (x, y) => { for (int i = 0; i < x; i++) for (int j = 0; j < y; j++) screen[i, j] = true; };
+            Action<int, int> rotaCol = (x, n) => {
+                for (int j = 0; j < n; j++)
+                {
+                    bool temp = false;
+                    for (int i = 0; i < height - 1; i++)
+                    {
+                        temp = screen[x, i + 1];
+                        screen[x, i + 1] = screen[x, 0];
+                        screen[x, 0] = temp;
+                    }
+                }
+            };
+
+            Action<int, int> rotaRow = (y, n) => {
+                for (int j = 0; j < n; j++)
+                {
+                    bool temp = false;
+                    for (int i = 0; i < width - 1; i++)
+                    {
+                        temp = screen[i + 1, y];
+                        screen[i + 1, y] = screen[0, y];
+                        screen[0, y] = temp;
+                    }
+                    //Display(screen, height, width);
+                }
+            };
+
+            
+            foreach(string input in Inputs.Day8Input)
+            {
+                Match match = regex.Matches(input)[0];
+                switch(match.Captures[0].Value.Substring(0,4))
+                {
+                    case "rota":
+                        if (match.Groups[2].Value.Substring(0, 3) == "col") rotaCol(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
+                        else if (match.Groups[2].Value.Substring(0, 3) == "row") rotaRow(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
+                        else throw new Exception("bad rotate subCommand");
+                        break;
+                    case "rect":
+                        rect(int.Parse(match.Groups[6].Value), int.Parse(match.Groups[7].Value));
+                        break;
+                    default:
+                        throw new Exception("bad command");
+                }
+                Display(screen, height, width);
+            }
+
+            int count = 0;
+            for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                    if (screen[x, y]) count++;
+
+            Console.WriteLine($"{count} pixels lit");
+
+        }
+
+        public static void Display(bool[,] screen, int height, int width)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                    Console.Write(screen[x, y] ? "X" : ".");
+                Console.WriteLine();
+            }
+            Console.WriteLine();
         }
 
         public static void Day9()
         {
             int totalLength = 0;
             Regex regex = new Regex(@"(\(([0-9]+)x([0-9]+)\))(.*)");
-            foreach (string input in Inputs.Day8Input)
+            foreach (string input in Inputs.Day9Input)
             {
                 string decompressed = input;
                 MatchCollection matches = regex.Matches(decompressed);
@@ -49,7 +122,7 @@ namespace Advent_Of_Code_2016
             DateTime start = DateTime.Now;
             long totalLength = 0;
             Regex regex = new Regex(@"(\(([0-9]+)x([0-9]+)\))(.*)", RegexOptions.Compiled);
-            foreach (string input in Inputs.Day8Input)
+            foreach (string input in Inputs.Day9Input)
             {
                 string decompressed = input;
                 MatchCollection matches = regex.Matches(decompressed);
