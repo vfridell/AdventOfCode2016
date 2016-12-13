@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using AdventOfCode2016;
 
@@ -13,7 +15,103 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day8();
+            Day11();
+        }
+
+        public static void Day11()
+        {
+            Day11Board board = new Day11Board();
+            int countMoves = 0;
+            while (!board.Success)
+            {
+                double bestScore;
+                Day11Move bestMove = Day11GetBestMove(board, 7, out bestScore);
+                Console.WriteLine(bestMove.ToString());
+                board.ApplyMove(bestMove);
+                countMoves++;
+            }
+
+            Console.WriteLine($"{countMoves} moves to success!");
+        }
+
+        public static Day11Move Day11GetBestMove(Day11Board board, int depth, out double bestScore)
+        {
+
+            if (depth == 0)
+            {
+                bestScore = board.Score;
+                return null;
+            }
+
+            List<Day11Move> moves = board.GetAllMoves();
+            var moveList = new List<Tuple<double, Day11Move, Day11Board>>();
+            foreach (Day11Move move in moves)
+            {
+                Day11Board newBoard = board.Clone();
+                newBoard.ApplyMove(move);
+                moveList.Add(new Tuple<double, Day11Move, Day11Board>(newBoard.Score, move, newBoard));
+            }
+            
+            if (moves.Count == 0)
+            {
+                bestScore = board.Score;
+                return null;
+            }
+
+            Day11Move localBestMove = moveList.OrderByDescending(t => t.Item1).First().Item2;
+            double localBestScore = Double.MinValue;
+
+            foreach (Tuple<double, Day11Move, Day11Board> mTuple in moveList.OrderByDescending(t => t.Item1))
+            {
+                double score;
+                Day11Move subBestMove = Day11GetBestMove(mTuple.Item3, depth - 1, out score);
+                double oldBestScore = localBestScore;
+                localBestScore = Math.Max(score, localBestScore);
+                if (oldBestScore != localBestScore) localBestMove = mTuple.Item2;
+            }
+
+            bestScore = localBestScore;
+            return localBestMove;
+        }
+
+        public static void Day10()
+        {
+            Dictionary<int, Day10Bot> bots = new Dictionary<int, Day10Bot>();
+            var instructions = new List<Day10Instruction>();
+            Regex regex = new Regex(@"value (\d+).* bot (\d+)|bot (\d+).* (bot|output) (\d+).* (bot|output) (\d+)");
+            foreach (string input in Inputs.Day10Input)
+            {
+                MatchCollection matches = regex.Matches(input);
+                if (matches[0].Value.Substring(0, 3) == "bot")
+                {
+                    int fromBot = int.Parse(matches[0].Groups[3].Value);
+                    bool targetLowBot = matches[0].Groups[4].Value == "bot";
+                    int lowBot = int.Parse(matches[0].Groups[5].Value);
+                    bool targetHighBot = matches[0].Groups[6].Value == "bot";
+                    int highBot = int.Parse(matches[0].Groups[7].Value);
+                    instructions.Add(new GiveInstruction(fromBot, lowBot, targetLowBot, highBot, targetHighBot));
+                }
+                else
+                {
+                    int chipValue = int.Parse(matches[0].Groups[1].Value);
+                    int botNum = int.Parse(matches[0].Groups[2].Value);
+                    instructions.Add(new ValueAddInstruction(botNum, chipValue));
+                }
+            }
+
+            while (instructions.Count > 0)
+            {
+                var newInstructions = new List<Day10Instruction>();
+                foreach (var instruction in instructions)
+                {
+                    if (!instruction.Execute(bots))
+                    {
+                        newInstructions.Add(instruction);
+                    }
+                }
+                instructions = newInstructions;
+            }
+            Console.WriteLine($"Output 0, 1, and 2 values multiplied: {bots[-9999].Low * bots[-1].Low * bots[-2].Low}");
         }
 
         public static void Day8()

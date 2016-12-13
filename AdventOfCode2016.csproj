@@ -43,6 +43,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Day10Bot.cs" />
+    <Compile Include="Day10Instruction.cs" />
+    <Compile Include="Day11Board.cs" />
     <Compile Include="EncryptedRoomPart.cs" />
     <Compile Include="Inputs.cs" />
     <Compile Include="Program.cs" />
