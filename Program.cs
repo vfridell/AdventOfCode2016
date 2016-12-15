@@ -18,61 +18,34 @@ namespace Advent_Of_Code_2016
             Day11();
         }
 
+        public static int Day11Depth = 7;
+        public static List<Day11Move> movesToMake;
         public static void Day11()
         {
-            Day11Board board = new Day11Board();
-            int countMoves = 0;
-            while (!board.Success)
+            Node rootNode = new Node(new Day11Board());
+            List<Day11Board> history = new List<Day11Board>() {rootNode.Board};
+            Node currentNode = rootNode;
+
+            foreach (Node node in currentNode.Board.GetAllNodesLazy())
             {
-                double bestScore;
-                Day11Move bestMove = Day11GetBestMove(board, 7, out bestScore);
-                Console.WriteLine(bestMove.ToString());
-                board.ApplyMove(bestMove);
-                countMoves++;
+                node.Board
             }
+            int c = futureBoards.Count - 1;
+            while (c >= 0)
+            {
+                if (history.Contains(futureBoards[c])) futureBoards.RemoveAt(c);
+                //else if (board.distance < futureBoards[c].distance) futureBoards.RemoveAt(c);
+
+
+                c = Math.Min(futureBoards.Count - 1, c - 1);
+            }
+            board = futureBoards.OrderBy(b => b.distance).First();
+            countMoves++;
 
             Console.WriteLine($"{countMoves} moves to success!");
         }
 
-        public static Day11Move Day11GetBestMove(Day11Board board, int depth, out double bestScore)
-        {
-
-            if (depth == 0)
-            {
-                bestScore = board.Score;
-                return null;
-            }
-
-            List<Day11Move> moves = board.GetAllMoves();
-            var moveList = new List<Tuple<double, Day11Move, Day11Board>>();
-            foreach (Day11Move move in moves)
-            {
-                Day11Board newBoard = board.Clone();
-                newBoard.ApplyMove(move);
-                moveList.Add(new Tuple<double, Day11Move, Day11Board>(newBoard.Score, move, newBoard));
-            }
-            
-            if (moves.Count == 0)
-            {
-                bestScore = board.Score;
-                return null;
-            }
-
-            Day11Move localBestMove = moveList.OrderByDescending(t => t.Item1).First().Item2;
-            double localBestScore = Double.MinValue;
-
-            foreach (Tuple<double, Day11Move, Day11Board> mTuple in moveList.OrderByDescending(t => t.Item1))
-            {
-                double score;
-                Day11Move subBestMove = Day11GetBestMove(mTuple.Item3, depth - 1, out score);
-                double oldBestScore = localBestScore;
-                localBestScore = Math.Max(score, localBestScore);
-                if (oldBestScore != localBestScore) localBestMove = mTuple.Item2;
-            }
-
-            bestScore = localBestScore;
-            return localBestMove;
-        }
+        public static 
 
         public static void Day10()
         {

@@ -9,6 +9,18 @@ using System.Xml.Schema;
 
 namespace AdventOfCode2016
 {
+    public class Node
+    {
+        public Node(Day11Board board)
+        {
+            Board = board;
+        }
+
+        public readonly Day11Board Board;
+
+        public IEnumerable<Node> Children => Board.GetAllNodesLazy();
+    }
+
     public class Day11Board
     {
         public int ElevatorFloor = 1;
@@ -20,14 +32,18 @@ namespace AdventOfCode2016
         {
             get
             {
-
-                //double score = -(ElevatorFloor * 5) + FloorPieces[1].Count + (FloorPieces[2].Count * 2) + (FloorPieces[3].Count * 4) + (FloorPieces[4].Count * 8);
-                if (Success) return 10000.00;
-                double score = -(ElevatorFloor * 5) + (FloorPieces[3].Count * 4) + (FloorPieces[4].Count * 8);
+                if (Success) return double.MaxValue;
                 //double score = -(ElevatorFloor * 5) + (FloorPieces[3].Count * 4) + (FloorPieces[4].Count * 8);
-                //double score = -(ElevatorFloor * 4) + (FloorPieces[3].Count * 4) + (FloorPieces[4].Count * 8);
+                //double matchedPairs2 = FloorPieces[2].Join(FloorPieces[2], p => p.TypeName, p2 => p2.TypeName, (p, p2) => p.MatchedPair(p2) ? 1 : 0).Sum();
+                //double matchedPairs = FloorPieces[ElevatorFloor].Join(FloorPieces[ElevatorFloor], p => p.TypeName, p2 => p2.TypeName, (p, p2) => p.MatchedPair(p2) ? 1 : 0).Sum();
+                double score = -(ElevatorFloor*5) + (FloorPieces[3].Count*4) + (FloorPieces[4].Count*8);
                 return score;
             }
+        }
+
+        public int distance
+        {
+            get { return FloorPieces.Aggregate(0, (i, pair) => i += ((4 - pair.Key) * pair.Value.Count), i => i); }
         }
 
         public Day11Board()
@@ -65,6 +81,31 @@ namespace AdventOfCode2016
                 FloorPieces[move.ToFloor].Add(move.Piece2);
             }
             ElevatorFloor = move.ToFloor;
+        }
+
+        public List<Day11Board> GetAllBoards()
+        {
+            List<Day11Move> moves = GetAllMoves();
+            var boardList = new List<Day11Board>();
+            foreach (Day11Move move in moves)
+            {
+                Day11Board newBoard = Clone();
+                newBoard.ApplyMove(move);
+                boardList.Add(newBoard);
+            }
+            return boardList;
+        }
+
+        public IEnumerable<Node> GetAllNodesLazy()
+        {
+            List<Day11Move> moves = GetAllMoves();
+            var boardList = new List<Day11Board>();
+            foreach (Day11Move move in moves)
+            {
+                Day11Board newBoard = Clone();
+                newBoard.ApplyMove(move);
+                yield return new Node(newBoard);
+            }
         }
 
         public List<Day11Move> GetAllMoves()
@@ -145,7 +186,7 @@ namespace AdventOfCode2016
         }
     }
 
-    public class Day11Move
+    public struct Day11Move
     {
         public int PieceCount => pieces.Count;
         public Day11Piece Piece => pieces[0];
@@ -153,10 +194,11 @@ namespace AdventOfCode2016
         public int ToFloor { get; }
         public int FromFloor { get; }
 
-        private List<Day11Piece> pieces = new List<Day11Piece>();
+        private List<Day11Piece> pieces;
 
         public Day11Move(Day11Piece piece, int fromFloor, int toFloor)
         {
+            pieces = new List<Day11Piece>();
             pieces.Add(piece);
             FromFloor = fromFloor;
             ToFloor = toFloor;
@@ -164,6 +206,7 @@ namespace AdventOfCode2016
 
         public Day11Move(Day11Piece piece, Day11Piece piece2, int fromFloor, int toFloor)
         {
+            pieces = new List<Day11Piece>();
             pieces.Add(piece);
             pieces.Add(piece2);
             FromFloor = fromFloor;
