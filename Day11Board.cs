@@ -9,18 +9,6 @@ using System.Xml.Schema;
 
 namespace AdventOfCode2016
 {
-    public class Node
-    {
-        public Node(Day11Board board)
-        {
-            Board = board;
-        }
-
-        public readonly Day11Board Board;
-
-        public IEnumerable<Node> Children => Board.GetAllNodesLazy();
-    }
-
     public class Day11Board
     {
         public int ElevatorFloor = 1;
@@ -28,18 +16,8 @@ namespace AdventOfCode2016
 
         public bool Success => FloorPieces[4].Count == 10;
 
-        public double Score
-        {
-            get
-            {
-                if (Success) return double.MaxValue;
-                //double score = -(ElevatorFloor * 5) + (FloorPieces[3].Count * 4) + (FloorPieces[4].Count * 8);
-                //double matchedPairs2 = FloorPieces[2].Join(FloorPieces[2], p => p.TypeName, p2 => p2.TypeName, (p, p2) => p.MatchedPair(p2) ? 1 : 0).Sum();
-                //double matchedPairs = FloorPieces[ElevatorFloor].Join(FloorPieces[ElevatorFloor], p => p.TypeName, p2 => p2.TypeName, (p, p2) => p.MatchedPair(p2) ? 1 : 0).Sum();
-                double score = -(ElevatorFloor*5) + (FloorPieces[3].Count*4) + (FloorPieces[4].Count*8);
-                return score;
-            }
-        }
+        public int fScore { get; set; }
+        public int gScore { get; set; }
 
         public int distance
         {
@@ -94,18 +72,6 @@ namespace AdventOfCode2016
                 boardList.Add(newBoard);
             }
             return boardList;
-        }
-
-        public IEnumerable<Node> GetAllNodesLazy()
-        {
-            List<Day11Move> moves = GetAllMoves();
-            var boardList = new List<Day11Board>();
-            foreach (Day11Move move in moves)
-            {
-                Day11Board newBoard = Clone();
-                newBoard.ApplyMove(move);
-                yield return new Node(newBoard);
-            }
         }
 
         public List<Day11Move> GetAllMoves()
@@ -183,6 +149,53 @@ namespace AdventOfCode2016
             if (totalPieces != 10) throw new Exception("Something went wrong");
 
             return newBoard;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is Day11Board)) return false;
+            return Equals((Day11Board)obj);
+        }
+
+        public bool Equals(Day11Board other)
+        {
+            if (other.ElevatorFloor != ElevatorFloor) return false;
+            foreach (var kvp in FloorPieces)
+            {
+                foreach (Day11Piece piece in kvp.Value)
+                {
+                    if (!other.FloorPieces[kvp.Key].Contains(piece)) return false;
+                }
+            }
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hashCode = ElevatorFloor*7;
+            foreach (var kvp in FloorPieces)
+            {
+                foreach (Day11Piece piece in kvp.Value)
+                {
+                    hashCode += piece.GetHashCode() * 17;
+                }
+            }
+            return hashCode;
+        }
+
+        public override string ToString()
+        {
+            StringBuilder output = new StringBuilder();
+            for (int i = 4; i>0; i--)
+            {
+                output.Append(ElevatorFloor == i ? $"-->{i} " : $"   {i} ");
+                foreach (Day11Piece piece in FloorPieces[i])
+                {
+                    output.Append(piece.TypeName.Substring(0,2)).Append(piece.Generator ? "G " : "K ");
+                }
+                output.AppendLine();
+            }
+            return output.ToString();
         }
     }
 

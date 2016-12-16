@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using AdventOfCode2016;
 
 namespace Advent_Of_Code_2016
@@ -22,30 +23,65 @@ namespace Advent_Of_Code_2016
         public static List<Day11Move> movesToMake;
         public static void Day11()
         {
-            Node rootNode = new Node(new Day11Board());
-            List<Day11Board> history = new List<Day11Board>() {rootNode.Board};
-            Node currentNode = rootNode;
+            Day11Board currentBoard = new Day11Board();
+            currentBoard.fScore = currentBoard.distance;
+            currentBoard.gScore = 0;
 
-            foreach (Node node in currentNode.Board.GetAllNodesLazy())
+            Console.WriteLine(currentBoard);
+
+            Dictionary<Day11Board, Day11Board> cameFrom = new Dictionary<Day11Board, Day11Board>();
+            List<Day11Board> openSet = new List<Day11Board>() { currentBoard };
+            List<Day11Board> closedSet = new List<Day11Board>();
+
+            bool success = false;
+            while (openSet.Count > 0)
             {
-                node.Board
+                currentBoard = openSet.Find(b => b.fScore == openSet.Min(b2 => b2.fScore));
+                if (currentBoard.Success)
+                {
+                    Console.WriteLine($"Success! fScore: {currentBoard.fScore} gScore: {currentBoard.gScore}");
+                    success = true;
+                    break;
+                }
+
+                openSet.Remove(currentBoard);
+                closedSet.Add(currentBoard);
+                //foreach (Day11Board childBoard in currentBoard.GetAllBoards())
+                Parallel.ForEach(currentBoard.GetAllBoards(), childBoard =>
+                {
+                    if (closedSet.Contains(childBoard)) return;
+                    int possible_gScore = currentBoard.gScore + 1;
+                    if (!openSet.Contains(childBoard))
+                    {
+                        openSet.Add(childBoard);
+                    }
+                    else if (possible_gScore >= childBoard.gScore)
+                    {
+                        return; // not a better path 
+                    }
+
+                    cameFrom[childBoard] = currentBoard;
+                    childBoard.gScore = possible_gScore;
+                    childBoard.fScore = childBoard.gScore + childBoard.distance;
+               });
+
             }
-            int c = futureBoards.Count - 1;
-            while (c >= 0)
-            {
-                if (history.Contains(futureBoards[c])) futureBoards.RemoveAt(c);
-                //else if (board.distance < futureBoards[c].distance) futureBoards.RemoveAt(c);
 
-
-                c = Math.Min(futureBoards.Count - 1, c - 1);
-            }
-            board = futureBoards.OrderBy(b => b.distance).First();
-            countMoves++;
-
-            Console.WriteLine($"{countMoves} moves to success!");
+            PrintFullPath(cameFrom, currentBoard);
+            if(!success) Console.WriteLine("Could not find a solution");
         }
 
-        public static 
+
+        public static void PrintFullPath(Dictionary<Day11Board, Day11Board> cameFrom, Day11Board currentBoard)
+        {
+            Day11Board board = currentBoard;
+            Console.WriteLine(board.ToString());
+            while (cameFrom.ContainsKey(board))
+            {
+                board = cameFrom[board];
+                Console.WriteLine(board.ToString());
+            }
+        }
 
         public static void Day10()
         {
