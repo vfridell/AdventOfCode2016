@@ -14,14 +14,72 @@ namespace AdventOfCode2016
         public int ElevatorFloor = 1;
         public Dictionary<int, List<Day11Piece>> FloorPieces = new Dictionary<int, List<Day11Piece>>();
 
-        public bool Success => FloorPieces[4].Count == 10;
+        public bool Success => (FloorPieces[1].Count + FloorPieces[2].Count + FloorPieces[3].Count) == 0;
+
+        private int _totalPieces = 0;
+        public int TotalPieces
+        {
+            get
+            {
+                if(_totalPieces == 0)
+                {
+                    _totalPieces = FloorPieces.Values.Aggregate(0, (i, list) => i + list.Count);
+                }
+                return _totalPieces;
+            }
+        }
 
         public int fScore { get; set; }
         public int gScore { get; set; }
 
         public int distance
         {
-            get { return FloorPieces.Aggregate(0, (i, pair) => i += ((4 - pair.Key) * pair.Value.Count), i => i); }
+            get
+            {
+                int[] floorTest = {0, FloorPieces[1].Count, FloorPieces[2].Count, FloorPieces[3].Count, FloorPieces[4].Count};
+                int elevatorPieces = ElevatorFloor == 4 ? 1 : Math.Max(FloorPieces[ElevatorFloor].Count, 2);
+                floorTest[ElevatorFloor] -= elevatorPieces;
+                int moveCount = 0;
+                int currentFloor = ElevatorFloor;
+                while (floorTest[4] + 1 != TotalPieces)
+                {
+                    // go down
+                    while (elevatorPieces < 2 && currentFloor > 1)
+                    {
+                        currentFloor--;
+                        int piecesTaken = Math.Min(floorTest[currentFloor], 2 - elevatorPieces);
+                        if (piecesTaken > 0)
+                        {
+                            elevatorPieces += piecesTaken;
+                            floorTest[currentFloor] -= piecesTaken;
+                        }
+                        moveCount++;
+                    }
+                    // go up
+                    while (currentFloor < 4)
+                    {
+                        currentFloor++;
+                        int piecesTaken = Math.Min(floorTest[currentFloor], 2 - elevatorPieces);
+                        if (piecesTaken > 0)
+                        {
+                            elevatorPieces += piecesTaken;
+                            floorTest[currentFloor] -= piecesTaken;
+                        }
+                        moveCount++;
+                    }
+
+                    floorTest[4] += 1;
+                    elevatorPieces--;
+                }
+                return moveCount;
+
+                //int minMoves = (4 - ElevatorFloor);
+                //return Math.Max(minMoves, (int)Math.Ceiling(((double)FloorPieces[1].Count + (double)FloorPieces[2].Count +
+                //              (double)FloorPieces[3].Count) / (double)2));
+
+
+
+            }
         }
 
         public Day11Board()
@@ -30,23 +88,38 @@ namespace AdventOfCode2016
             // The second floor contains a polonium-compatible microchip and a promethium-compatible microchip.
             // The third floor contains nothing relevant.
             // The fourth floor contains nothing relevant.
+            //FloorPieces.Add(1, new List<Day11Piece>()
+            //{
+            //    new Day11Piece("polonium", true),
+            //    new Day11Piece("promethium", true),
+            //    new Day11Piece("thulium", true),
+            //    new Day11Piece("ruthenium", true),
+            //    new Day11Piece("cobalt", true),
+            //    new Day11Piece("thulium", false),
+            //    new Day11Piece("ruthenium", false),
+            //    new Day11Piece("cobalt", false),
+            //});
+            //FloorPieces.Add(2, new List<Day11Piece>() {
+            //    new Day11Piece("polonium", false),
+            //    new Day11Piece("promethium", false),
+            //});
+            //FloorPieces.Add(3, new List<Day11Piece>());
+            //FloorPieces.Add(4, new List<Day11Piece>());
+
+
             FloorPieces.Add(1, new List<Day11Piece>()
             {
-                new Day11Piece("polonium", true),
                 new Day11Piece("promethium", true),
-                new Day11Piece("thulium", true),
-                new Day11Piece("ruthenium", true),
-                new Day11Piece("cobalt", true),
-                new Day11Piece("thulium", false),
-                new Day11Piece("ruthenium", false),
-                new Day11Piece("cobalt", false),
+                new Day11Piece("polonium", true),
             });
-            FloorPieces.Add(2, new List<Day11Piece>() { 
+            FloorPieces.Add(2, new List<Day11Piece>() {
                 new Day11Piece("polonium", false),
-                new Day11Piece("promethium", false),
             });
             FloorPieces.Add(3, new List<Day11Piece>());
-            FloorPieces.Add(4, new List<Day11Piece>());
+            FloorPieces.Add(4, new List<Day11Piece>()
+            {
+                new Day11Piece("promethium", false),
+            });
         }
 
         public void ApplyMove(Day11Move move)
@@ -67,6 +140,17 @@ namespace AdventOfCode2016
             var boardList = new List<Day11Board>();
             foreach (Day11Move move in moves)
             {
+                //// reject moves that are crap
+                //if (move.ToFloor > move.FromFloor)
+                //{
+                //    //if (move.PieceCount != 2) continue;  // reject moving up without two pieces
+                //}
+                //if (move.FromFloor > move.ToFloor)
+                //{
+                //    //if (FloorPieces[move.ToFloor].Count == 0) continue;  // reject move of pieces to empty lower floor 
+                //    if (move.PieceCount == 2) continue;  // reject move of two pieces down
+                //}
+
                 Day11Board newBoard = Clone();
                 newBoard.ApplyMove(move);
                 boardList.Add(newBoard);
@@ -76,9 +160,8 @@ namespace AdventOfCode2016
 
         public List<Day11Move> GetAllMoves()
         {
-            int totalPieces = FloorPieces.Values.Aggregate(0, (i, list) => i + list.Count);
-            if(totalPieces != 10) throw  new Exception("Something went wrong");
-
+            //int totalPieces = FloorPieces.Values.Aggregate(0, (i, list) => i + list.Count);
+            //if(totalPieces != 10) throw new Exception("Something went wrong");
 
             List<Day11Move> moves = new List<Day11Move>();
             int up = ElevatorFloor + 1 < 5 ? ElevatorFloor + 1 : -99;
@@ -145,8 +228,8 @@ namespace AdventOfCode2016
                 newBoard.FloorPieces.Add(kvp.Key, new List<Day11Piece>(kvp.Value));
             }
 
-            int totalPieces = newBoard.FloorPieces.Values.Aggregate(0, (i, list) => i + list.Count);
-            if (totalPieces != 10) throw new Exception("Something went wrong");
+            //int totalPieces = newBoard.FloorPieces.Values.Aggregate(0, (i, list) => i + list.Count);
+            //if (totalPieces != TotalPieces) throw new Exception("Something went wrong");
 
             return newBoard;
         }
@@ -185,7 +268,7 @@ namespace AdventOfCode2016
 
         public override string ToString()
         {
-            StringBuilder output = new StringBuilder();
+            StringBuilder output = new StringBuilder($"{distance}\n");
             for (int i = 4; i>0; i--)
             {
                 output.Append(ElevatorFloor == i ? $"-->{i} " : $"   {i} ");

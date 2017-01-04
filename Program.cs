@@ -19,8 +19,6 @@ namespace Advent_Of_Code_2016
             Day11();
         }
 
-        public static int Day11Depth = 7;
-        public static List<Day11Move> movesToMake;
         public static void Day11()
         {
             Day11Board currentBoard = new Day11Board();
@@ -34,6 +32,7 @@ namespace Advent_Of_Code_2016
             List<Day11Board> closedSet = new List<Day11Board>();
 
             bool success = false;
+            int moveNum = 0;
             while (openSet.Count > 0)
             {
                 currentBoard = openSet.Find(b => b.fScore == openSet.Min(b2 => b2.fScore));
@@ -46,10 +45,10 @@ namespace Advent_Of_Code_2016
 
                 openSet.Remove(currentBoard);
                 closedSet.Add(currentBoard);
-                //foreach (Day11Board childBoard in currentBoard.GetAllBoards())
-                Parallel.ForEach(currentBoard.GetAllBoards(), childBoard =>
+                //Parallel.ForEach(currentBoard.GetAllBoards(), childBoard =>
+                foreach (Day11Board childBoard in currentBoard.GetAllBoards())
                 {
-                    if (closedSet.Contains(childBoard)) return;
+                    if (closedSet.Contains(childBoard)) continue;
                     int possible_gScore = currentBoard.gScore + 1;
                     if (!openSet.Contains(childBoard))
                     {
@@ -57,14 +56,15 @@ namespace Advent_Of_Code_2016
                     }
                     else if (possible_gScore >= childBoard.gScore)
                     {
-                        return; // not a better path 
+                        continue; // not a better path 
                     }
 
                     cameFrom[childBoard] = currentBoard;
                     childBoard.gScore = possible_gScore;
                     childBoard.fScore = childBoard.gScore + childBoard.distance;
-               });
+               }
 
+                moveNum++;
             }
 
             PrintFullPath(cameFrom, currentBoard);
@@ -76,11 +76,14 @@ namespace Advent_Of_Code_2016
         {
             Day11Board board = currentBoard;
             Console.WriteLine(board.ToString());
+            int cnt = 0;
             while (cameFrom.ContainsKey(board))
             {
                 board = cameFrom[board];
                 Console.WriteLine(board.ToString());
+                cnt++;
             }
+            Console.WriteLine($"Solution found in {cnt} moves");
         }
 
         public static void Day10()
