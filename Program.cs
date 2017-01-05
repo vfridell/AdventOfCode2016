@@ -29,13 +29,15 @@ namespace Advent_Of_Code_2016
 
             Dictionary<Day11Board, Day11Board> cameFrom = new Dictionary<Day11Board, Day11Board>();
             List<Day11Board> openSet = new List<Day11Board>() { currentBoard };
+            //SortedList<int, Day11Board> openSet = new SortedList<int, Day11Board>() { { currentBoard.distance, currentBoard }, };
             List<Day11Board> closedSet = new List<Day11Board>();
 
             bool success = false;
             int moveNum = 0;
             while (openSet.Count > 0)
             {
-                currentBoard = openSet.Find(b => b.fScore == openSet.Min(b2 => b2.fScore));
+                openSet.Sort();
+                currentBoard = openSet[0];
                 if (currentBoard.Success)
                 {
                     Console.WriteLine($"Success! fScore: {currentBoard.fScore} gScore: {currentBoard.gScore}");

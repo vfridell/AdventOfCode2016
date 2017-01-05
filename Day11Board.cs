@@ -9,7 +9,7 @@ using System.Xml.Schema;
 
 namespace AdventOfCode2016
 {
-    public class Day11Board
+    public class Day11Board : IComparable
     {
         public int ElevatorFloor = 1;
         public Dictionary<int, List<Day11Piece>> FloorPieces = new Dictionary<int, List<Day11Piece>>();
@@ -32,53 +32,59 @@ namespace AdventOfCode2016
         public int fScore { get; set; }
         public int gScore { get; set; }
 
+        int _distance = -99;
         public int distance
         {
             get
             {
-                int[] floorTest = {0, FloorPieces[1].Count, FloorPieces[2].Count, FloorPieces[3].Count, FloorPieces[4].Count};
-                int elevatorPieces = ElevatorFloor == 4 ? 1 : Math.Max(FloorPieces[ElevatorFloor].Count, 2);
-                floorTest[ElevatorFloor] -= elevatorPieces;
-                int moveCount = 0;
-                int currentFloor = ElevatorFloor;
-                while (floorTest[4] + 1 != TotalPieces)
+                if (_distance == -99)
                 {
-                    // go down
-                    while (elevatorPieces < 2 && currentFloor > 1)
+                    int moveCount = 0;
+
+                    int[] floorTest = { 0, FloorPieces[1].Count, FloorPieces[2].Count, FloorPieces[3].Count, FloorPieces[4].Count };
+                    int elevatorPieces = ElevatorFloor == 4 ? 1 : Math.Min(FloorPieces[ElevatorFloor].Count, 2);
+                    floorTest[ElevatorFloor] -= elevatorPieces;
+                    int currentFloor = ElevatorFloor;
+                    while (floorTest[4] + 1 != TotalPieces)
                     {
-                        currentFloor--;
-                        int piecesTaken = Math.Min(floorTest[currentFloor], 2 - elevatorPieces);
-                        if (piecesTaken > 0)
+                        // go down
+                        while (elevatorPieces < 2 && currentFloor > 1)
                         {
-                            elevatorPieces += piecesTaken;
-                            floorTest[currentFloor] -= piecesTaken;
+                            currentFloor--;
+                            int piecesTaken = Math.Min(floorTest[currentFloor], 2 - elevatorPieces);
+                            if (piecesTaken > 0)
+                            {
+                                elevatorPieces += piecesTaken;
+                                floorTest[currentFloor] -= piecesTaken;
+                            }
+                            moveCount++;
                         }
-                        moveCount++;
-                    }
-                    // go up
-                    while (currentFloor < 4)
-                    {
-                        currentFloor++;
-                        int piecesTaken = Math.Min(floorTest[currentFloor], 2 - elevatorPieces);
-                        if (piecesTaken > 0)
+                        // go up
+                        while (currentFloor < 4)
                         {
-                            elevatorPieces += piecesTaken;
-                            floorTest[currentFloor] -= piecesTaken;
+                            currentFloor++;
+                            int piecesTaken = Math.Min(floorTest[currentFloor], 2 - elevatorPieces);
+                            if (piecesTaken > 0)
+                            {
+                                elevatorPieces += piecesTaken;
+                                floorTest[currentFloor] -= piecesTaken;
+                            }
+                            moveCount++;
                         }
-                        moveCount++;
+
+                        floorTest[4] += 1;
+                        elevatorPieces--;
                     }
 
-                    floorTest[4] += 1;
-                    elevatorPieces--;
+
+                    //int minMoves = (4 - ElevatorFloor);
+                    //moveCount = Math.Max(minMoves, (int)Math.Ceiling(((double)FloorPieces[1].Count + (double)FloorPieces[2].Count +
+                    //              (double)FloorPieces[3].Count) / (double)2));
+
+                    _distance = moveCount;
+
                 }
-                return moveCount;
-
-                //int minMoves = (4 - ElevatorFloor);
-                //return Math.Max(minMoves, (int)Math.Ceiling(((double)FloorPieces[1].Count + (double)FloorPieces[2].Count +
-                //              (double)FloorPieces[3].Count) / (double)2));
-
-
-
+                return _distance;
             }
         }
 
@@ -88,38 +94,44 @@ namespace AdventOfCode2016
             // The second floor contains a polonium-compatible microchip and a promethium-compatible microchip.
             // The third floor contains nothing relevant.
             // The fourth floor contains nothing relevant.
-            //FloorPieces.Add(1, new List<Day11Piece>()
-            //{
-            //    new Day11Piece("polonium", true),
-            //    new Day11Piece("promethium", true),
-            //    new Day11Piece("thulium", true),
-            //    new Day11Piece("ruthenium", true),
-            //    new Day11Piece("cobalt", true),
-            //    new Day11Piece("thulium", false),
-            //    new Day11Piece("ruthenium", false),
-            //    new Day11Piece("cobalt", false),
-            //});
-            //FloorPieces.Add(2, new List<Day11Piece>() {
-            //    new Day11Piece("polonium", false),
-            //    new Day11Piece("promethium", false),
-            //});
-            //FloorPieces.Add(3, new List<Day11Piece>());
-            //FloorPieces.Add(4, new List<Day11Piece>());
-
-
             FloorPieces.Add(1, new List<Day11Piece>()
             {
-                new Day11Piece("promethium", true),
                 new Day11Piece("polonium", true),
+                new Day11Piece("promethium", true),
+                new Day11Piece("thulium", true),
+                new Day11Piece("ruthenium", true),
+                new Day11Piece("cobalt", true),
+                new Day11Piece("thulium", false),
+                new Day11Piece("ruthenium", false),
+                new Day11Piece("cobalt", false),
+
+                // part 2
+                new Day11Piece("elerium", false),
+                new Day11Piece("elerium", true),
+                new Day11Piece("dilithium", false),
+                new Day11Piece("dilithium", true),
             });
             FloorPieces.Add(2, new List<Day11Piece>() {
                 new Day11Piece("polonium", false),
-            });
-            FloorPieces.Add(3, new List<Day11Piece>());
-            FloorPieces.Add(4, new List<Day11Piece>()
-            {
                 new Day11Piece("promethium", false),
             });
+            FloorPieces.Add(3, new List<Day11Piece>());
+            FloorPieces.Add(4, new List<Day11Piece>());
+
+
+            //FloorPieces.Add(1, new List<Day11Piece>()
+            //{
+            //    new Day11Piece("promethium", true),
+            //    new Day11Piece("polonium", true),
+            //});
+            //FloorPieces.Add(2, new List<Day11Piece>() {
+            //    new Day11Piece("polonium", false),
+            //});
+            //FloorPieces.Add(3, new List<Day11Piece>());
+            //FloorPieces.Add(4, new List<Day11Piece>()
+            //{
+            //    new Day11Piece("promethium", false),
+            //});
         }
 
         public void ApplyMove(Day11Move move)
@@ -266,6 +278,8 @@ namespace AdventOfCode2016
             return hashCode;
         }
 
+
+
         public override string ToString()
         {
             StringBuilder output = new StringBuilder($"{distance}\n");
@@ -279,6 +293,12 @@ namespace AdventOfCode2016
                 output.AppendLine();
             }
             return output.ToString();
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (!(obj is Day11Board)) throw new Exception("Not comparable");
+            return distance.CompareTo(((Day11Board)obj).distance);
         }
     }
 
