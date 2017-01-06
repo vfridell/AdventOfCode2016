@@ -90,6 +90,9 @@ namespace AdventOfCode2016
 
         public Day11Board()
         {
+            gScore = 0;
+            fScore = 0;
+
             // The first floor contains a polonium generator, a thulium generator, a thulium-compatible microchip, a promethium generator, a ruthenium generator, a ruthenium-compatible microchip, a cobalt generator, and a cobalt - compatible microchip.
             // The second floor contains a polonium-compatible microchip and a promethium-compatible microchip.
             // The third floor contains nothing relevant.
@@ -119,18 +122,22 @@ namespace AdventOfCode2016
             FloorPieces.Add(4, new List<Day11Piece>());
 
 
+            //// Example Input
             //FloorPieces.Add(1, new List<Day11Piece>()
             //{
-            //    new Day11Piece("promethium", true),
-            //    new Day11Piece("polonium", true),
+            //    new Day11Piece("hydrogen", false),
+            //    new Day11Piece("lithium", false),
             //});
             //FloorPieces.Add(2, new List<Day11Piece>() {
-            //    new Day11Piece("polonium", false),
+            //    new Day11Piece("hydrogen", true),
             //});
-            //FloorPieces.Add(3, new List<Day11Piece>());
+            //FloorPieces.Add(3, new List<Day11Piece>()
+            //{
+            //    new Day11Piece("lithium", true),
+            //});
+
             //FloorPieces.Add(4, new List<Day11Piece>()
             //{
-            //    new Day11Piece("promethium", false),
             //});
         }
 
@@ -159,7 +166,7 @@ namespace AdventOfCode2016
                 //}
                 //if (move.FromFloor > move.ToFloor)
                 //{
-                //    //if (FloorPieces[move.ToFloor].Count == 0) continue;  // reject move of pieces to empty lower floor 
+                ////    //if (FloorPieces[move.ToFloor].Count == 0) continue;  // reject move of pieces to empty lower floor 
                 //    if (move.PieceCount == 2) continue;  // reject move of two pieces down
                 //}
 
@@ -298,7 +305,9 @@ namespace AdventOfCode2016
         public int CompareTo(object obj)
         {
             if (!(obj is Day11Board)) throw new Exception("Not comparable");
-            return distance.CompareTo(((Day11Board)obj).distance);
+            int fScoreComparison = fScore.CompareTo(((Day11Board) obj).fScore);
+            if (fScoreComparison != 0) return fScoreComparison;
+            return distance.CompareTo(((Day11Board) obj).distance);
         }
     }
 

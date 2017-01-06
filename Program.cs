@@ -16,7 +16,7 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day11Simple();
+            Day11();
         }
 
         public static void Day11Simple()
@@ -67,19 +67,18 @@ namespace Advent_Of_Code_2016
             currentBoard.fScore = currentBoard.distance;
             currentBoard.gScore = 0;
 
-            Console.WriteLine(currentBoard);
-
             Dictionary<Day11Board, Day11Board> cameFrom = new Dictionary<Day11Board, Day11Board>();
             List<Day11Board> openSet = new List<Day11Board>() { currentBoard };
             //SortedList<int, Day11Board> openSet = new SortedList<int, Day11Board>() { { currentBoard.distance, currentBoard }, };
             List<Day11Board> closedSet = new List<Day11Board>();
 
             bool success = false;
-            int moveNum = 0;
+            int nodeNum = 0;
             while (openSet.Count > 0)
             {
                 openSet.Sort();
                 currentBoard = openSet[0];
+                Console.WriteLine(currentBoard);
                 if (currentBoard.Success)
                 {
                     Console.WriteLine($"Success! fScore: {currentBoard.fScore} gScore: {currentBoard.gScore}");
@@ -92,23 +91,30 @@ namespace Advent_Of_Code_2016
                 //Parallel.ForEach(currentBoard.GetAllBoards(), childBoard =>
                 foreach (Day11Board childBoard in currentBoard.GetAllBoards())
                 {
-                    if (closedSet.Contains(childBoard)) continue;
-                    int possible_gScore = currentBoard.gScore + 1;
-                    if (!openSet.Contains(childBoard))
+                    int nextGScore = currentBoard.gScore + 1;
+
+                    Day11Board existingBoard = openSet.FirstOrDefault(b => b.Equals(childBoard));
+                    if (existingBoard != null && nextGScore < existingBoard.gScore)
                     {
-                        openSet.Add(childBoard);
-                    }
-                    else if (possible_gScore >= childBoard.gScore)
-                    {
-                        continue; // not a better path 
+                        openSet.Remove(existingBoard);
                     }
 
-                    cameFrom[childBoard] = currentBoard;
-                    childBoard.gScore = possible_gScore;
-                    childBoard.fScore = childBoard.gScore + childBoard.distance;
+                    existingBoard = closedSet.FirstOrDefault(b => b.Equals(childBoard));
+                    if (existingBoard != null && nextGScore < existingBoard.gScore)
+                    {
+                        closedSet.Remove(existingBoard);
+                    }
+
+                    if (!openSet.Contains(childBoard) && !closedSet.Contains(childBoard))
+                    {
+                        childBoard.gScore = nextGScore;
+                        childBoard.fScore = childBoard.gScore + childBoard.distance;
+                        openSet.Add(childBoard);
+                        cameFrom[childBoard] = currentBoard;
+                    }
                }
 
-                moveNum++;
+                nodeNum++;
             }
 
             PrintFullPath(cameFrom, currentBoard);
