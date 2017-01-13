@@ -6,6 +6,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using AdventOfCode2016;
@@ -16,7 +17,63 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day12();
+            Day13();
+        }
+
+        public static void Day13()
+        {
+            int [,] officeSpace = new int[255,255];
+            Tuple<int,int> currentLocation = new Tuple<int, int>(1,1);
+            Tuple<int,int> destination = new Tuple<int, int>(31,39);
+            Func<int, int, bool> IsSpace = (x, y) =>
+            {
+                int z = (x*x + 3*x + 2*x*y + y + y*y) + 1358;
+                int onBits = 0;
+                for(int i = 0; i < 15; i++) { if((z | (int)Math.Pow(2, i)) == 1) onBits++; }
+                return onBits%2 == 0;
+            };
+            Func<int, int, int, int, double> distanceFunc = (x1, y1, x2, y2) => Math.Sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
+
+            var openSet = new List<Tuple<int, int>>();
+            openSet.Add(currentLocation);
+            var closedSet = new List<Tuple<int, int>>();
+            var fScores = new Dictionary<Tuple<int,int>, double>();
+            var gScores = new Dictionary<Tuple<int,int>, double>();
+            gScores[currentLocation] = 0;
+            fScores[currentLocation] = distanceFunc(currentLocation.Item1, currentLocation.Item2, destination.Item1, destination.Item2);
+
+            while (openSet.Count > 0)
+            {
+                double minScore = fScores.Values.Min();
+                currentLocation = fScores.First(kvp => kvp.Value == minScore).Key;
+                // TODO fix the openSet so that it's sortable
+                openSet.Remove(currentLocation);
+                closedSet.Add(currentLocation);
+                double nextGScore = gScores[currentLocation] + 1;
+                for (int x = -1; x < 2; x++)
+                {
+                    for (int y = -1; y < 2; y++)
+                    {
+                        if((x != 0 && y != 0) || x==0 && y==0) continue;  // cardinal directions only, no diagonal and avoid the current location
+                        if (IsSpace(currentLocation.Item1 + x, currentLocation.Item2 + y))
+                        {
+                            var neighbor = new Tuple<int, int>(currentLocation.Item1 + x, currentLocation.Item2 + y);
+                            double possibleFScore = distanceFunc(currentLocation.Item1, currentLocation.Item2, destination.Item1, destination.Item2) + gScores[currentLocation];
+
+                            if (openSet.Contains(neighbor) && gScores[neighbor] > nextGScore) openSet.Remove(neighbor);
+
+                            if(closedSet.Contains(neighbor) && gScores[neighbor] > nextGScore) closedSet.Remove(neighbor);
+
+                            if (!closedSet.Contains(neighbor) && !openSet.Contains(neighbor))
+                            {
+                                openSet.Add(neighbor);
+                                gScores[neighbor] = nextGScore;
+                                fScores[neighbor] = nextGScore + possibleFScore;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public static void Day12()
