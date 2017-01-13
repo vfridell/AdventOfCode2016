@@ -16,7 +16,52 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day11();
+            Day12();
+        }
+
+        public static void Day12()
+        {
+            int currentLineNumber = 0;
+            Regex cmdRegex = new Regex(@"^(\w{3}) (.*)");
+
+            var registers = new Dictionary<string, int>();
+            registers["c"] = 1;
+
+            Action<string> copyCommand = (s1) => { int x; if(int.TryParse(s1.Split(' ')[0], out x)) { registers[s1.Split(' ')[1]] = int.Parse(s1.Split(' ')[0]); } else { if (!registers.ContainsKey(s1.Split(' ')[0])) registers[s1.Split(' ')[0]] = 0; registers[s1.Split(' ')[1]] = registers[s1.Split(' ')[0]]; } };
+            Action<string> incrementCommand = (s1) => { registers[s1]++; };
+            Action<string> decrementCommand = (s1) => { registers[s1]--; };
+            Action<string> jumpCommand = (s1) =>
+            {
+                int x;
+                if (int.TryParse(s1.Split(' ')[0], out x))
+                {
+                    if(x != 0) currentLineNumber = currentLineNumber + int.Parse(s1.Split(' ')[1]);
+                }
+                else
+                {
+                    if (!registers.ContainsKey(s1.Split(' ')[0])) registers[s1.Split(' ')[0]] = 0;
+                    if (registers[s1.Split(' ')[0]] != 0)
+                        currentLineNumber = currentLineNumber + int.Parse(s1.Split(' ')[1]);
+                }
+            };
+            var commandDict = new Dictionary<string, Action<string>>()
+            {
+                { "cpy", copyCommand},
+                { "inc", incrementCommand},
+                { "dec", decrementCommand},
+                { "jnz", jumpCommand},
+            };
+
+            while (currentLineNumber < Inputs.Day12Input.Count)
+            {
+                string currentLine = Inputs.Day12Input[currentLineNumber];
+                MatchCollection matches = cmdRegex.Matches(currentLine);
+                int oldLineNumber = currentLineNumber;
+                commandDict[matches[0].Groups[1].Value](matches[0].Groups[2].Value);
+                if (currentLineNumber == oldLineNumber) currentLineNumber++;
+            }
+
+            Console.WriteLine($"Register a = {registers["a"]}");
         }
 
         public static void Day11Simple()
@@ -69,7 +114,6 @@ namespace Advent_Of_Code_2016
 
             Dictionary<Day11Board, Day11Board> cameFrom = new Dictionary<Day11Board, Day11Board>();
             List<Day11Board> openSet = new List<Day11Board>() { currentBoard };
-            //SortedList<int, Day11Board> openSet = new SortedList<int, Day11Board>() { { currentBoard.distance, currentBoard }, };
             List<Day11Board> closedSet = new List<Day11Board>();
 
             bool success = false;
@@ -88,7 +132,6 @@ namespace Advent_Of_Code_2016
 
                 openSet.Remove(currentBoard);
                 closedSet.Add(currentBoard);
-                //Parallel.ForEach(currentBoard.GetAllBoards(), childBoard =>
                 foreach (Day11Board childBoard in currentBoard.GetAllBoards())
                 {
                     int nextGScore = currentBoard.gScore + 1;
