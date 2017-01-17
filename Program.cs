@@ -17,63 +17,169 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day13();
+            Day13Part2();
         }
 
-        public static void Day13()
+        class Day13Location : IComparable<Day13Location>
         {
-            int [,] officeSpace = new int[255,255];
-            Tuple<int,int> currentLocation = new Tuple<int, int>(1,1);
-            Tuple<int,int> destination = new Tuple<int, int>(31,39);
+            public Tuple<int, int> location;
+            public int x => location.Item1;
+            public int y => location.Item2;
+            public double fScore;
+            public double gScore;
+
+            public int CompareTo(Day13Location other) => fScore.CompareTo(other.fScore);
+
+            public override int GetHashCode() => fScore.GetHashCode() + gScore.GetHashCode() + location.Item1.GetHashCode() + location.Item2.GetHashCode();
+
+            public override bool Equals(object obj)
+            {
+                if (!(obj is Day13Location)) return false;
+                return Equals((Day13Location)obj);
+            }
+
+            public bool Equals(Day13Location other)
+            {
+                return location.Equals(other.location);
+            }
+
+            public override string ToString()
+            {
+                return $"({x},{y})";
+            }
+        }
+
+        public static void Day13Part2()
+        {
+            //int favoriteNum = 10;
+            //var destination = new Day13Location() {location = new Tuple<int, int>(7, 4)};
+            int favoriteNum = 1358;
+            Func<Day13Location, Day13Location, double> distanceFunc = (Day13Location l1, Day13Location l2) => Math.Sqrt((l2.x - l1.x) * (l2.x - l1.x) + (l2.y - l1.y) * (l2.y - l1.y));
+            var currentLocation = new Day13Location() { location = new Tuple<int, int>(1, 1), gScore = 0 };
             Func<int, int, bool> IsSpace = (x, y) =>
             {
-                int z = (x*x + 3*x + 2*x*y + y + y*y) + 1358;
+                int z = (x * x + 3 * x + 2 * x * y + y + y * y) + favoriteNum;
                 int onBits = 0;
-                for(int i = 0; i < 15; i++) { if((z | (int)Math.Pow(2, i)) == 1) onBits++; }
-                return onBits%2 == 0;
+                for (int i = 0; i < 15; i++) { if ((z & (int)Math.Pow(2, i)) > 0) onBits++; }
+                return onBits % 2 == 0;
             };
-            Func<int, int, int, int, double> distanceFunc = (x1, y1, x2, y2) => Math.Sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
 
-            var openSet = new List<Tuple<int, int>>();
+            var openSet = new List<Day13Location>();
             openSet.Add(currentLocation);
-            var closedSet = new List<Tuple<int, int>>();
-            var fScores = new Dictionary<Tuple<int,int>, double>();
-            var gScores = new Dictionary<Tuple<int,int>, double>();
-            gScores[currentLocation] = 0;
-            fScores[currentLocation] = distanceFunc(currentLocation.Item1, currentLocation.Item2, destination.Item1, destination.Item2);
-
+            var closedSet = new List<Day13Location>();
+            bool success = false;
             while (openSet.Count > 0)
             {
-                double minScore = fScores.Values.Min();
-                currentLocation = fScores.First(kvp => kvp.Value == minScore).Key;
-                // TODO fix the openSet so that it's sortable
+                currentLocation = openSet.First();
                 openSet.Remove(currentLocation);
                 closedSet.Add(currentLocation);
-                double nextGScore = gScores[currentLocation] + 1;
+                double nextGScore = currentLocation.gScore + 1;
+                if(nextGScore > 50) continue;
                 for (int x = -1; x < 2; x++)
                 {
                     for (int y = -1; y < 2; y++)
                     {
-                        if((x != 0 && y != 0) || x==0 && y==0) continue;  // cardinal directions only, no diagonal and avoid the current location
-                        if (IsSpace(currentLocation.Item1 + x, currentLocation.Item2 + y))
+                        if ((x != 0 && y != 0) || x == 0 && y == 0) continue;  // cardinal directions only, no diagonal and avoid the current location
+                        var neighborTuple = new Tuple<int, int>(currentLocation.x + x, currentLocation.y + y);
+                        if (neighborTuple.Item1 < 0 || neighborTuple.Item2 < 0) continue; // negative values are invalid
+                        if (IsSpace(currentLocation.x + x, currentLocation.y + y))
                         {
-                            var neighbor = new Tuple<int, int>(currentLocation.Item1 + x, currentLocation.Item2 + y);
-                            double possibleFScore = distanceFunc(currentLocation.Item1, currentLocation.Item2, destination.Item1, destination.Item2) + gScores[currentLocation];
+                            var neighbor = new Day13Location() { location = neighborTuple, gScore = nextGScore};
+                            //if (neighbor != null && neighbor.gScore > nextGScore) openSet.Remove(neighbor);
 
-                            if (openSet.Contains(neighbor) && gScores[neighbor] > nextGScore) openSet.Remove(neighbor);
-
-                            if(closedSet.Contains(neighbor) && gScores[neighbor] > nextGScore) closedSet.Remove(neighbor);
+                            //neighbor = closedSet.FirstOrDefault(l => l.Equals(new Day13Location() { location = neighborTuple }));
+                            //if (neighbor != null && neighbor.gScore > nextGScore) closedSet.Remove(neighbor);
 
                             if (!closedSet.Contains(neighbor) && !openSet.Contains(neighbor))
                             {
                                 openSet.Add(neighbor);
-                                gScores[neighbor] = nextGScore;
-                                fScores[neighbor] = nextGScore + possibleFScore;
+                                neighbor.gScore = nextGScore;
                             }
                         }
                     }
                 }
             }
+
+            // print out the path
+            var gScore50Locs = closedSet.Where(l => l.gScore <= 50);
+            Console.WriteLine($"There are {gScore50Locs.Count()} locations within 50 steps from the start");
+        }
+
+        public static void Day13()
+        {
+            //int favoriteNum = 10;
+            //var destination = new Day13Location() {location = new Tuple<int, int>(7, 4)};
+            int favoriteNum = 1358;
+            var destination = new Day13Location() {location = new Tuple<int, int>(31, 39)};
+            Func<Day13Location, Day13Location, double> distanceFunc = (Day13Location l1, Day13Location l2) => Math.Sqrt((l2.x - l1.x)*(l2.x - l1.x) + (l2.y - l1.y)*(l2.y - l1.y));
+            int [,] officeSpace = new int[255,255];
+            var cameFrom = new Dictionary<Day13Location, Day13Location>();
+            var currentLocation = new Day13Location() {location = new Tuple<int, int>(1, 1), gScore = 0};
+            currentLocation.fScore = distanceFunc(currentLocation, destination);
+            Func<int, int, bool> IsSpace = (x, y) =>
+            {
+                int z = (x*x + 3*x + 2*x*y + y + y*y) + favoriteNum;
+                int onBits = 0;
+                for(int i = 0; i < 15; i++) { if((z & (int)Math.Pow(2, i)) > 0) onBits++; }
+                return onBits%2 == 0;
+            };
+
+            var openSet = new List<Day13Location>();
+            openSet.Add(currentLocation);
+            var closedSet = new List<Day13Location>();
+            bool success = false;
+            while (openSet.Count > 0)
+            {
+                openSet.Sort();
+                currentLocation = openSet.First();
+                if(currentLocation.Equals(destination))
+                {
+                    Console.WriteLine("Success!");
+                    success = true;
+                    break;
+                }
+                openSet.Remove(currentLocation);
+                closedSet.Add(currentLocation);
+                double nextGScore = currentLocation.gScore + 1;
+                for (int x = -1; x < 2; x++)
+                {
+                    for (int y = -1; y < 2; y++)
+                    {
+                        if((x != 0 && y != 0) || x==0 && y==0) continue;  // cardinal directions only, no diagonal and avoid the current location
+                        var neighborTuple = new Tuple<int, int>(currentLocation.x + x, currentLocation.y + y);
+                        if(neighborTuple.Item1 < 0 || neighborTuple.Item2 < 0) continue; // negative values are invalid
+                        if (IsSpace(currentLocation.x + x, currentLocation.y + y))
+                        {
+                            double possibleFScore = distanceFunc(currentLocation, destination) + currentLocation.gScore;
+
+                            var neighbor = openSet.FirstOrDefault( l => l.Equals(new Day13Location() { location = neighborTuple }));
+                            if (neighbor != null && neighbor.gScore > nextGScore) openSet.Remove(neighbor);
+
+                            neighbor = closedSet.FirstOrDefault( l => l.Equals(new Day13Location() { location = neighborTuple }));
+                            if(neighbor != null && neighbor.gScore > nextGScore) closedSet.Remove(neighbor);
+
+                            if (!closedSet.Contains(neighbor) && !openSet.Contains(neighbor))
+                            {
+                                if (null == neighbor) neighbor = new Day13Location() {location = neighborTuple};
+                                openSet.Add(neighbor);
+                                neighbor.gScore = nextGScore;
+                                neighbor.fScore = nextGScore + possibleFScore;
+                                cameFrom[neighbor] = currentLocation;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // print out the path
+            Console.WriteLine(currentLocation);
+            int steps = 0;
+            while (cameFrom.TryGetValue(currentLocation, out currentLocation))
+            {
+                Console.WriteLine(currentLocation);
+                steps++;
+            }
+            Console.WriteLine($"Took {steps} steps");
         }
 
         public static void Day12()
