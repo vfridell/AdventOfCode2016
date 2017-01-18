@@ -17,42 +17,84 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day13Part2();
+            Day14();
         }
 
-        class Day13Location : IComparable<Day13Location>
+        private static void Day14()
         {
-            public Tuple<int, int> location;
-            public int x => location.Item1;
-            public int y => location.Item2;
-            public double fScore;
-            public double gScore;
-
-            public int CompareTo(Day13Location other) => fScore.CompareTo(other.fScore);
-
-            public override int GetHashCode() => fScore.GetHashCode() + gScore.GetHashCode() + location.Item1.GetHashCode() + location.Item2.GetHashCode();
-
-            public override bool Equals(object obj)
+            //string salt = "abc";
+            string salt = "ngcjuoqr";
+            Regex repeatRegex = new Regex(@"(.)\1\1");
+            int foundKeys = 0;
+            int index = 0;
+            while (true)
             {
-                if (!(obj is Day13Location)) return false;
-                return Equals((Day13Location)obj);
+                // part 1
+                //string hashString = GetHashString($"{salt}{index}", 1);
+
+                // part 2
+                string hashString = GetHashString($"{salt}{index}", 2017);
+
+                var matches = repeatRegex.Matches(hashString);
+                if (matches.Count > 0)
+                {
+                    var regexString = $"{matches[0].Groups[0].Value[0]}{{5}}";
+                    Regex fiveRepeatRegex = new Regex(regexString);
+                    for (int i = index+1; i <= index + 1001; i++)
+                    {
+                        // part 1
+                        //string hashString2 = GetHashString($"{salt}{i}", 1);
+
+                        // part 2
+                        string hashString2 = GetHashString($"{salt}{i}", 2017);
+
+                        if (fiveRepeatRegex.IsMatch(hashString2))
+                        {
+                            foundKeys++;
+                            if (foundKeys == 64)
+                            {
+                                Console.WriteLine($"Index {index} produces the 64th key");
+                                return;
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Found key {foundKeys} at index {index}-{i}: {hashString2}");
+                                break;
+                            }
+                        }
+                    }
+
+                }
+                index++;
+            }
+        }
+
+        public static Dictionary<string, string> HashCache = new Dictionary<string, string>();
+        public static string GetHashString(string input, int iterations)
+        {
+            string hashString;
+            if (HashCache.TryGetValue(input, out hashString))
+            {
+                return hashString;
             }
 
-            public bool Equals(Day13Location other)
+            hashString = input;
+            do
             {
-                return location.Equals(other.location);
-            }
-
-            public override string ToString()
-            {
-                return $"({x},{y})";
-            }
+                byte[] bytes = hashString.ToCharArray().Select(c => (byte)c).ToArray();
+                using (MemoryStream stream = new MemoryStream(bytes))
+                {
+                    byte[] hashedBytes = MD5.Create().ComputeHash(stream);
+                    hashString = hashedBytes.Aggregate<byte, string>("", (s, b) => s + b.ToString("x2"));
+                }
+                iterations--;
+            } while (iterations > 0);
+            HashCache[input] = hashString;
+            return hashString;
         }
 
         public static void Day13Part2()
         {
-            //int favoriteNum = 10;
-            //var destination = new Day13Location() {location = new Tuple<int, int>(7, 4)};
             int favoriteNum = 1358;
             Func<Day13Location, Day13Location, double> distanceFunc = (Day13Location l1, Day13Location l2) => Math.Sqrt((l2.x - l1.x) * (l2.x - l1.x) + (l2.y - l1.y) * (l2.y - l1.y));
             var currentLocation = new Day13Location() { location = new Tuple<int, int>(1, 1), gScore = 0 };
@@ -85,10 +127,6 @@ namespace Advent_Of_Code_2016
                         if (IsSpace(currentLocation.x + x, currentLocation.y + y))
                         {
                             var neighbor = new Day13Location() { location = neighborTuple, gScore = nextGScore};
-                            //if (neighbor != null && neighbor.gScore > nextGScore) openSet.Remove(neighbor);
-
-                            //neighbor = closedSet.FirstOrDefault(l => l.Equals(new Day13Location() { location = neighborTuple }));
-                            //if (neighbor != null && neighbor.gScore > nextGScore) closedSet.Remove(neighbor);
 
                             if (!closedSet.Contains(neighbor) && !openSet.Contains(neighbor))
                             {
