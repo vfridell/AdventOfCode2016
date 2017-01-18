@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -17,7 +18,49 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day14();
+            Day15();
+        }
+
+        private static void Day15()
+        {
+            List<Day15Disc> discSet = new List<Day15Disc>();
+            //discSet.Add(new Day15Disc(1, 5, 4));
+            //discSet.Add(new Day15Disc(2, 2, 1));
+            discSet.Add(new Day15Disc(1, 7, 0));
+            discSet.Add(new Day15Disc(2, 13, 0));
+            discSet.Add(new Day15Disc(3, 3, 2));
+            discSet.Add(new Day15Disc(4, 5, 2));
+            discSet.Add(new Day15Disc(5, 17, 0));
+            discSet.Add(new Day15Disc(6, 19, 7));
+            discSet.Add(new Day15Disc(7, 11, 0));
+
+            int time = discSet.Count;
+            while (true)
+            {
+                if (discSet.All(d => d.IsAtCorrectPosForDrop(time)))
+                {
+                    Console.WriteLine($"Push the button at time {time}");
+                    return;
+                }
+                time++;
+            }
+        }
+
+        public struct Day15Disc
+        {
+            public Day15Disc(int discNum, int totalPos, int startPos)
+            {
+                order = discNum;
+                positions = totalPos;
+                startPosition = startPos;
+            }
+            public int order { get; }
+            public int positions { get; }
+            public int startPosition { get; }
+            public int correctPosAtCapsuleDrop => positions - order;
+
+            public int GetPosAtTime(int time) => (startPosition + time) % positions;
+            public bool IsAtCorrectPosForDrop(int time) => GetPosAtTime(time) == correctPosAtCapsuleDrop;
         }
 
         private static void Day14()
@@ -304,7 +347,7 @@ namespace Advent_Of_Code_2016
                 elevatorPieces--;
             }
 
-            Console.WriteLine($"Minimum number of moves is {moveCount}");
+            Console.WriteLine($"Minimum order of moves is {moveCount}");
         }
 
         public static void Day11()
