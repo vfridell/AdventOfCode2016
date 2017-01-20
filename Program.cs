@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
+using System.Security.Authentication.ExtendedProtection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using AdventOfCode2016;
@@ -18,7 +19,108 @@ namespace Advent_Of_Code_2016
     {
         static void Main(string[] args)
         {
-            Day15();
+            Day16Part2();
+        }
+
+        private static void Day16Part2()
+        {
+            string input = "01111010110010011";
+            
+            long i = 0x1EB26;
+            long i1 = 125734;
+            long i_r = 0x6CA1;
+            long i_r1 = 27809;
+
+            long i2 = (i << 18) + i_r;
+
+            string revInput = new string(input.Reverse().Select(c => c == '0' ? '1' : '0').ToArray());
+            string output = input;
+            int fillLength = 35651584;
+            int checksumLength = fillLength;
+            while (checksumLength % 2 == 0) checksumLength /= 2;
+
+
+            
+            string chk = input;
+            while(chk.Length != 1) chk = GetChecksum(chk);
+
+            string chk2 = revInput;
+            while (chk2.Length != 1) chk2 = GetChecksum(chk2);
+
+            var next = new string((input + "0" + revInput).Reverse().Select(c => c == '0' ? '1' : '0').ToArray());
+            string chk3 = next;
+            while (chk3.Length != 1) chk3 = GetChecksum(chk3);
+
+            var nextNext = next + "0" + new string (next.Reverse().Select(c => c == '0' ? '1' : '0').ToArray());
+            string chk4 = nextNext;
+            while (chk4.Length != 1) chk4 = GetChecksum(chk4);
+
+            output = chk + chk2 + chk3 + chk4;
+            while (output.Length < checksumLength)
+            {
+                output = string.Concat(output, new string(output.Reverse().Select(c => c == '0' ? '1' : '0').ToArray()));
+            }
+            output = output.Substring(0, checksumLength);
+
+            string checksum = output;
+            while (checksum.Length % 2 == 0)
+            {
+                Stack<char> workingStack = new Stack<char>(checksum.Reverse());
+                checksum = "";
+                while (workingStack.Count > 0)
+                {
+                    char first = workingStack.Pop();
+                    char second = workingStack.Pop();
+                    if (first == second) checksum = checksum + '1';
+                    else checksum = checksum + '0';
+                }
+            }
+        }
+
+        private static string GetChecksum(string input)
+        {
+            string checksum = input;
+            if (checksum.Length%2 != 0) checksum = checksum + "0";
+            while (checksum.Length % 2 == 0)
+            {
+                Stack<char> workingStack = new Stack<char>(checksum.Reverse());
+                checksum = "";
+                while (workingStack.Count > 0)
+                {
+                    char first = workingStack.Pop();
+                    char second = workingStack.Pop();
+                    if (first == second) checksum = checksum + '1';
+                    else checksum = checksum + '0';
+                }
+            }
+            return checksum;
+        }
+
+        private static void Day16()
+        {
+            string input = "01111010110010011";
+            string output = input;
+            int fillLength = 35651584;
+            while (output.Length < fillLength)
+            {
+                output = string.Concat(output, "0", new string(input.Reverse().Select(c => c == '0' ? '1' : '0').ToArray()));
+                input = output;
+            }
+            output = output.Substring(0, fillLength);
+
+            string checksum = output;
+            while (checksum.Length%2 == 0)
+            {
+                Stack<char> workingStack = new Stack<char>(checksum.Reverse());
+                checksum = "";
+                while (workingStack.Count > 0)
+                {
+                    char first = workingStack.Pop();
+                    char second = workingStack.Pop();
+                    if (first == second) checksum = checksum + '1';
+                    else checksum = checksum + '0'; 
+                }
+            }
         }
 
         private static void Day15()
